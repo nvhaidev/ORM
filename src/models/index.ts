@@ -23,14 +23,9 @@ export interface Data {
 }
 
 export interface TypeMethod extends Data {
+    [key: string]: any;
     save: () => Promise<void>;
     destroy: () => Promise<void>;
-    Error?:TypeError
-}
-
-export interface TypeError {
-    message: string,
-    code:number
 }
 
 export type Row = RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader;

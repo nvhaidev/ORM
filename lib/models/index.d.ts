@@ -21,13 +21,9 @@ export interface Data {
     [key: string]: any;
 }
 export interface TypeMethod extends Data {
+    [key: string]: any;
     save: () => Promise<void>;
     destroy: () => Promise<void>;
-    Error?: TypeError;
-}
-export interface TypeError {
-    message: string;
-    code: number;
 }
 export declare type Row = RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader;
 export interface TypeOptions {
