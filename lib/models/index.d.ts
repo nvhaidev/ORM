@@ -10,18 +10,12 @@ export interface Config {
     queueLimit?: number;
 }
 export interface TypeOrmMethod {
-    create: (value: {
+    create: <T>(value: {
         [p: string]: any;
     }) => Promise<TypeMethod>;
-    findOne: (value: {
-        [p: string]: any;
-    }) => Promise<TypeMethod>;
-    findById: (id: number, options?: ({
-        [p: string]: any;
-    } | undefined)) => Promise<TypeMethod>;
-    findAll: (options?: ({
-        [p: string]: any;
-    } | undefined)) => Promise<string[] | undefined>;
+    findOne: <T>(value: TypeOptionsFind) => Promise<TypeMethod>;
+    findById: <T>(id: number, options?: (TypeOptions | undefined)) => Promise<TypeMethod>;
+    findAll: (options?: (TypeOptionsFindAll | undefined)) => Promise<string[] | undefined>;
 }
 export interface Data {
     [key: string]: any;
@@ -29,5 +23,22 @@ export interface Data {
 export interface TypeMethod extends Data {
     save: () => Promise<void>;
     destroy: () => Promise<void>;
+    Error?: TypeError;
+}
+export interface TypeError {
+    message: string;
+    code: number;
 }
 export declare type Row = RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader;
+export interface TypeOptions {
+    exclude?: string[];
+}
+export interface TypeOptionsFind extends TypeOptions {
+    where: {
+        [key: string]: any;
+    };
+}
+export interface TypeOptionsFindAll extends TypeOptionsFind {
+    limit?: number;
+    offset?: number;
+}

@@ -1,4 +1,4 @@
-import { Config, Data, Row, TypeMethod } from "./models";
+import { Config, Data, Row, TypeOptions, TypeOptionsFind, TypeOptionsFindAll } from "./models";
 declare class ORM {
     private pool;
     private tableName;
@@ -10,41 +10,35 @@ declare class ORM {
     table<T>(tableName: string): {
         create: (value: {
             [key: string]: any;
-        }) => Promise<TypeMethod | undefined>;
-        findOne: (value: {
-            [key: string]: any;
         }) => Promise<(T & {
             save: () => Promise<void>;
             destroy: () => Promise<void>;
         }) | undefined>;
-        findById: (id: number, options?: {
-            [key: string]: any;
-        } | undefined) => Promise<(T & {
+        findOne: (value: TypeOptionsFind) => Promise<(T & {
             save: () => Promise<void>;
             destroy: () => Promise<void>;
         }) | undefined>;
-        findAll: (options?: {
-            [key: string]: any;
-        } | undefined) => Promise<any[] | undefined>;
+        findById: (id: number, options?: TypeOptions | undefined) => Promise<(T & {
+            save: () => Promise<void>;
+            destroy: () => Promise<void>;
+        }) | undefined>;
+        findAll: (options?: TypeOptionsFindAll | undefined) => Promise<any[] | undefined>;
     } | undefined;
     create<T>(value: {
         [key: string]: any;
-    }): Promise<TypeMethod | undefined>;
-    findOne<T>(value: {
-        [key: string]: any;
     }): Promise<(T & {
         save: () => Promise<void>;
         destroy: () => Promise<void>;
     }) | undefined>;
-    findById<T>(id: number, options?: {
-        [key: string]: any;
-    }): Promise<(T & {
+    findOne<T>(value: TypeOptionsFind): Promise<(T & {
         save: () => Promise<void>;
         destroy: () => Promise<void>;
     }) | undefined>;
-    findAll(options?: {
-        [key: string]: any;
-    }): Promise<any[] | undefined>;
+    findById<T>(id: number, options?: TypeOptions): Promise<(T & {
+        save: () => Promise<void>;
+        destroy: () => Promise<void>;
+    }) | undefined>;
+    findAll(options?: TypeOptionsFindAll): Promise<any[] | undefined>;
     stringToArray(row: Row): any[];
     excludeArray(data: any[], exclude: string[]): any[];
     excludeObject(data: Data, exclude: string[]): Data;

@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import {Config, Data, Row, TypeMethod, TypeOptions, TypeOptionsFind, TypeOptionsFindAll, TypeOrmMethod} from "./models";
+import {Config, Data, Row, TypeOptions, TypeOptionsFind, TypeOptionsFindAll} from "./models";
 import {validateValue} from "./validate";
 
 class ORM {
@@ -55,7 +55,7 @@ class ORM {
         }
     }
 
-    public table<T>(tableName: string): TypeOrmMethod | undefined {
+    public table<T>(tableName: string) {
         try {
             const $ = this;
             $.tableName = tableName;
@@ -71,7 +71,7 @@ class ORM {
         }
     }
 
-    public async create<T>(value: { [key: string]: any }): Promise<TypeMethod | undefined> {
+    public async create<T>(value: { [key: string]: any }) {
         try {
             const $ = this;
             if (!validateValue(value)) return undefined;
@@ -101,7 +101,7 @@ class ORM {
 
     }
 
-    public async findOne<T>(value: TypeOptionsFind): Promise<TypeMethod | undefined> {
+    public async findOne<T>(value: TypeOptionsFind) {
         try {
             const $ = this;
             if (!validateValue(value)) return undefined;
@@ -136,7 +136,7 @@ class ORM {
         }
     }
 
-    public async findById<T>(id: number, options?: TypeOptions): Promise<TypeMethod | undefined> {
+    public async findById<T>(id: number, options?: TypeOptions) {
         try {
             const $ = this;
             const sql = `SELECT *
@@ -168,7 +168,7 @@ class ORM {
         }
     }
 
-    public async findAll(options?: TypeOptionsFindAll): Promise<string[] | undefined> {
+    public async findAll(options?: TypeOptionsFindAll) {
         try {
             const $ = this;
             if (options) {

@@ -12,9 +12,9 @@ export interface Config {
 }
 
 export interface TypeOrmMethod {
-    create: (value: { [p: string]: any }) => Promise<TypeMethod | undefined>;
-    findOne: (value: TypeOptionsFind) => Promise<TypeMethod | undefined>;
-    findById: (id: number, options?: (TypeOptions | undefined)) => Promise<TypeMethod | undefined>;
+    create:<T> (value: { [p: string]: any }) => Promise<TypeMethod>;
+    findOne:<T> (value: TypeOptionsFind) => Promise<TypeMethod>;
+    findById:<T> (id: number, options?: (TypeOptions | undefined)) => Promise<TypeMethod>;
     findAll: (options?: (TypeOptionsFindAll | undefined)) => Promise<string[] | undefined>;
 }
 
@@ -25,16 +25,18 @@ export interface Data {
 export interface TypeMethod extends Data {
     save: () => Promise<void>;
     destroy: () => Promise<void>;
+    Error?:TypeError
 }
 
 export interface TypeError {
-    message: string
+    message: string,
+    code:number
 }
 
 export type Row = RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader;
 
 export interface TypeOptions {
-    exclude: string[]
+    exclude?: string[]
 }
 
 export interface TypeOptionsFind extends TypeOptions {
