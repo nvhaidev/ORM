@@ -1,16 +1,15 @@
-import mysql, {OkPacket, ResultSetHeader, RowDataPacket} from 'mysql2/promise';
-import {Config, Data, TypeMethod} from "./models";
+import mysql from 'mysql2/promise';
+import {Config, Data, Row, TypeMethod} from "./models";
 import {validateValue} from "./validate";
 
 class ORM {
     private pool: mysql.Pool;
     private tableName: string;
-    private data: Data;
 
     constructor(config: Config) {
         this.pool = mysql.createPool(config);
         this.tableName = ""
-        this.data = {}
+
     }
 
     public crateTable = async (tableName: string, columns?: { [key: string]: any }): Promise<boolean> => {
@@ -46,7 +45,6 @@ class ORM {
 
     }
 
-
     public checkTable = async (tableName: string): Promise<boolean> => {
         try {
             const sql = `SHOW TABLES LIKE '${tableName}'`;
@@ -68,7 +66,7 @@ class ORM {
                 create: $.create<T>.bind($),
                 findOne: $.findOne<T>.bind($),
                 findById: $.findById<T>.bind($),
-                findAll: $.findAll<T>.bind($)
+                findAll: $.findAll.bind($)
             }
         } catch (error) {
             console.error(error);
@@ -86,14 +84,16 @@ class ORM {
             const [row,] = await $.pool.query(sql, values);
             const id = (row as mysql.ResultSetHeader).insertId;
             const data = await $.findById(id) as unknown as T;
+
             return {
-                ...data,
-                save: function () {
-                    console.log(this)
-                    return Promise.resolve()
+                ...data as unknown as T,
+                save: async function () {
+                    const json = JSON.parse(JSON.stringify(this))
+                    await $.update.bind($)(json)
                 },
-                destroy: function () {
-                    return Promise.resolve()
+                destroy: async function () {
+                    const id = (this as Data).id;
+                    await $.delete.bind($)(id)
                 }
             }
         } catch (error) {
@@ -119,16 +119,17 @@ class ORM {
             const data = $.stringToArray(row)[0];
 
             if (data) $.excludeObject(row, exclude)
-            $.data = data;
+
             return {
                 ...data as unknown as T,
                 save: async function () {
-                    $.data = this;
-                    const json=JSON.parse(JSON.stringify(this))
+
+                    const json = JSON.parse(JSON.stringify(this))
                     await $.update.bind($)(json)
                 },
-                destroy: function () {
-                    return Promise.resolve()
+                destroy: async function () {
+                    const id = (this as Data).id;
+                    await $.delete.bind($)(id)
                 }
             }
         } catch (error) {
@@ -154,12 +155,13 @@ class ORM {
             }
             return {
                 ...data as unknown as T,
-                save: function () {
-                    console.log(this)
-                    return Promise.resolve()
+                save: async function () {
+                    const json = JSON.parse(JSON.stringify(this))
+                    await $.update.bind($)(json)
                 },
-                destroy: function () {
-                    return Promise.resolve()
+                destroy: async function () {
+                    const id = (this as Data).id;
+                    await $.delete.bind($)(id)
                 }
             }
         } catch (error) {
@@ -168,7 +170,7 @@ class ORM {
         }
     }
 
-    public async findAll<T>(options?: { [key: string]: any }) {
+    public async findAll(options?: { [key: string]: any }) {
         try {
             const $ = this;
             if (options) {
@@ -207,7 +209,7 @@ class ORM {
         }
     }
 
-    public stringToArray(row: RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader) {
+    public stringToArray(row: Row) {
         return (row as any[]).length > 0 ? (row as any[]) : []
     }
 
@@ -225,10 +227,9 @@ class ORM {
         return data
     }
 
-    public async update(data:Data) {
-        const $ = this;
-        console.log(data)
+    public async update(data: Data) {
         try {
+            const $ = this;
             if (!validateValue(data)) return undefined;
             const keys = Object.keys(data);
             const sql = `UPDATE ${$.tableName}
@@ -236,18 +237,29 @@ class ORM {
                          WHERE id = ?`;
             const values = keys.map(key => data[key]);
             values.push(data.id);
-            // console.log(sql)
-            // console.log(values)
-           await $.pool.query(sql, values);
-            return $.data
+            await $.pool.query(sql, values);
+            return data
         } catch (error) {
             console.error(error);
         }
 
     }
 
-    public delete(id: number): any {
-
+    public async delete(id: number) {
+        try {
+            const $ = this;
+            const sql = `DELETE
+                         FROM ${$.tableName}
+                         WHERE id = ?`;
+            await $.pool.query(sql, [id]);
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false
+        }
+    }
+    public async query(sql: string, value: string[]) {
+        return await this.pool.query(sql, value);
     }
 }
 

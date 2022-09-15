@@ -1,3 +1,5 @@
+import {OkPacket, ResultSetHeader, RowDataPacket} from "mysql2/promise";
+
 export interface Config {
     host: string;
     port?: number;
@@ -15,11 +17,14 @@ export interface TypeOrmMethod {
     findById: (id: number, options?: ({ [p: string]: any } | undefined)) => Promise<TypeMethod>;
     findAll: (options?: ({ [p: string]: any } | undefined)) => Promise<string[] | undefined>;
 }
-export interface Data{
+
+export interface Data {
     [key: string]: any;
 }
 
-export interface TypeMethod extends Data{
+export interface TypeMethod extends Data {
     save: () => Promise<void>;
     destroy: () => Promise<void>;
 }
+
+export type Row = RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader
