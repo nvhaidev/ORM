@@ -23,7 +23,7 @@ declare class ORM {
             destroy: () => Promise<void>;
         }) | undefined>;
         findAll: (options?: TypeOptionsFindAll | undefined) => Promise<any[] | undefined>;
-    } | undefined;
+    };
     create<T>(value: {
         [key: string]: any;
     }): Promise<(T & {

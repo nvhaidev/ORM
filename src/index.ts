@@ -56,18 +56,13 @@ class ORM {
     }
 
     public table<T>(tableName: string) {
-        try {
-            const $ = this;
-            $.tableName = tableName;
-            return {
-                create: $.create<T>.bind($),
-                findOne: $.findOne<T>.bind($),
-                findById: $.findById<T>.bind($),
-                findAll: $.findAll.bind($)
-            }
-        } catch (error) {
-            console.error(error);
-            return undefined
+        const $ = this;
+        $.tableName = tableName;
+        return {
+            create: $.create<T>.bind($),
+            findOne: $.findOne<T>.bind($),
+            findById: $.findById<T>.bind($),
+            findAll: $.findAll.bind($)
         }
     }
 
