@@ -1,6 +1,6 @@
 {
   "name": "@ptndev/orm",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "ORM",
   "homepage": "https://github.com/nvhaidev/ORM",
   "main": "lib/index.js",

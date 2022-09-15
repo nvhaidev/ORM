@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import {Config, Data, Row, TypeMethod} from "./models";
+import {Config, Data, Row, TypeMethod, TypeOptions, TypeOptionsFind, TypeOptionsFindAll, TypeOrmMethod} from "./models";
 import {validateValue} from "./validate";
 
 class ORM {
@@ -9,7 +9,6 @@ class ORM {
     constructor(config: Config) {
         this.pool = mysql.createPool(config);
         this.tableName = ""
-
     }
 
     public crateTable = async (tableName: string, columns?: { [key: string]: any }): Promise<boolean> => {
@@ -41,8 +40,6 @@ class ORM {
             console.error(error);
             return false;
         }
-
-
     }
 
     public checkTable = async (tableName: string): Promise<boolean> => {
@@ -58,7 +55,7 @@ class ORM {
         }
     }
 
-    public table<T>(tableName: string) {
+    public table<T>(tableName: string): TypeOrmMethod | undefined {
         try {
             const $ = this;
             $.tableName = tableName;
@@ -70,6 +67,7 @@ class ORM {
             }
         } catch (error) {
             console.error(error);
+            return undefined
         }
     }
 
@@ -103,7 +101,7 @@ class ORM {
 
     }
 
-    public async findOne<T>(value: { [key: string]: any }) {
+    public async findOne<T>(value: TypeOptionsFind): Promise<TypeMethod | undefined> {
         try {
             const $ = this;
             if (!validateValue(value)) return undefined;
@@ -138,7 +136,7 @@ class ORM {
         }
     }
 
-    public async findById<T>(id: number, options?: { [key: string]: any }) {
+    public async findById<T>(id: number, options?: TypeOptions): Promise<TypeMethod | undefined> {
         try {
             const $ = this;
             const sql = `SELECT *
@@ -170,7 +168,7 @@ class ORM {
         }
     }
 
-    public async findAll(options?: { [key: string]: any }) {
+    public async findAll(options?: TypeOptionsFindAll): Promise<string[] | undefined> {
         try {
             const $ = this;
             if (options) {
@@ -258,8 +256,10 @@ class ORM {
             return false
         }
     }
-    public async query(sql: string, value: string[]) {
-        return await this.pool.query(sql, value);
+
+    public async query(sql: string, values: string[]) {
+        const [row,] = await this.pool.query(sql, values);
+        return this.stringToArray(row)
     }
 }
 
