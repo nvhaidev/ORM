@@ -111,7 +111,7 @@ class ORM {
 
             let data = $.stringToArray(row)[0];
 
-            if (data) data = $.excludeObject(row, exclude)
+            if (data) data = $.excludeObject(data, exclude)
 
             return {
                 ...data as unknown as T,
@@ -144,7 +144,7 @@ class ORM {
             let data = $.stringToArray(row)[0]
             if (options) {
                 const exclude = options['exclude'] || [];
-                if (data) data = $.excludeObject(row, exclude)
+                if (data) data = $.excludeObject(data, exclude)
             }
             return {
                 ...data as unknown as T,
