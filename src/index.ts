@@ -109,9 +109,9 @@ class ORM {
             const values = where.map((key: string) => value['where'][key]);
             const [row,] = await $.pool.query(sql, values);
 
-            const data = $.stringToArray(row)[0];
+            let data = $.stringToArray(row)[0];
 
-            if (data) $.excludeObject(row, exclude)
+            if (data) data = $.excludeObject(row, exclude)
 
             return {
                 ...data as unknown as T,
@@ -141,10 +141,10 @@ class ORM {
                 return undefined;
             }
             const [row,] = await $.pool.query(sql, [id]);
-            const data = $.stringToArray(row)[0]
+            let data = $.stringToArray(row)[0]
             if (options) {
                 const exclude = options['exclude'] || [];
-                if (data) $.excludeObject(row, exclude)
+                if (data) data = $.excludeObject(row, exclude)
             }
             return {
                 ...data as unknown as T,
