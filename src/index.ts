@@ -224,7 +224,7 @@ class ORM {
         try {
             const $ = this;
             if (!validateValue(data)) return undefined;
-            this.excludeObject(data,["created_at"])
+            this.excludeObject(data, ["created_at", "updated_at"])
             const keys = Object.keys(data);
             const sql = `UPDATE ${$.tableName}
                          SET ${keys.map((key: string) => `${key} = ?`).join(',')}
