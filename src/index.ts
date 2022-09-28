@@ -1,14 +1,12 @@
 import mysql from 'mysql2/promise';
-import {Config, Data, Row, TypeOptions, TypeOptionsFind, TypeOptionsFindAll} from "./models";
+import {Config, Data, Row, TypeObject, TypeOptions, TypeOptionsFind, TypeOptionsFindAll} from "./models";
 import {validateValue} from "./validate";
 
 class ORM {
     private pool: mysql.Pool;
-    private tableName: string;
 
     constructor(config: Config) {
         this.pool = mysql.createPool(config);
-        this.tableName = ""
     }
 
     public crateTable = async (tableName: string, columns?: { [key: string]: any }): Promise<boolean> => {
@@ -57,36 +55,43 @@ class ORM {
 
     public table<T>(tableName: string) {
         const $ = this;
-        $.tableName = tableName;
+
         return {
-            create: $.create<T>.bind($),
-            findOne: $.findOne<T>.bind($),
-            findById: $.findById<T>.bind($),
-            findAll: $.findAll.bind($)
+            create: async function (value: Data<T>) {
+                return await $._create<T>(tableName, value)
+            },
+            findOne: async function (options: TypeOptionsFind<T>) {
+                return await $._findOne<T>(tableName, options)
+            },
+            findById: async function (id: number) {
+                return await $._findById<T>(tableName, id)
+            },
+            findAll: async function (options?: TypeOptionsFindAll<T>) {
+                return await $._findAll<T>(tableName, options)
+            },
         }
     }
 
-    public async create<T>(value: { [key: string]: any }) {
+    public async _create<T>(tableName: string, value: Data<T>) {
         try {
             const $ = this;
             if (!validateValue(value)) return undefined;
             const keys = Object.keys(value);
-            const sql = `INSERT INTO ${$.tableName} (${keys.join(',')})
+            const sql = `INSERT INTO ${tableName} (${keys.join(',')})
                          VALUES (${keys.map(() => '?').join(',')})`;
-            const values = keys.map(key => value[key]);
+            const values = keys.map(key => $.getValue(value, key));
             const [row,] = await $.pool.query(sql, values);
             const id = (row as mysql.ResultSetHeader).insertId;
-            const data = await $.findById(id) as unknown as T;
-
+            const data = await $._findById(tableName, id) as unknown as T;
             return {
                 ...data as unknown as T,
                 save: async function () {
                     const json = JSON.parse(JSON.stringify(this))
-                    await $.update.bind($)(json)
+                    return await $.update(tableName, json)
                 },
                 destroy: async function () {
-                    const id = (this as Data).id;
-                    await $.delete.bind($)(id)
+                    const id = (this as TypeObject).id
+                    return await $.delete(tableName, id)
                 }
             }
         } catch (error) {
@@ -96,17 +101,21 @@ class ORM {
 
     }
 
-    public async findOne<T>(value: TypeOptionsFind) {
+    public async _findOne<T>(tableName: string, value: TypeOptionsFind<T>) {
         try {
             const $ = this;
             if (!validateValue(value)) return undefined;
 
-            const where = Object.keys(value['where']);
+            const keyWhere = Object.keys(value['where']);
+
+            const valueWhere = value['where'];
             const exclude = value['exclude'] || [];
             const sql = `SELECT *
-                         FROM ${$.tableName}
-                         WHERE ${where.map((key: string) => `${key} = ?`).join(' AND ')}`;
-            const values = where.map((key: string) => value['where'][key]);
+                         FROM ${tableName}
+                         WHERE ${keyWhere.map((key: string) => `${key} = ?`).join(' AND ')}`;
+            const values = keyWhere.map((key: string) => $.getValue(valueWhere, key));
+
+
             const [row,] = await $.pool.query(sql, values);
 
             let data = $.stringToArray(row)[0];
@@ -116,13 +125,12 @@ class ORM {
             return {
                 ...data as unknown as T,
                 save: async function () {
-
                     const json = JSON.parse(JSON.stringify(this))
-                    await $.update.bind($)(json)
+                    return await $.update(tableName, json)
                 },
                 destroy: async function () {
-                    const id = (this as Data).id;
-                    await $.delete.bind($)(id)
+                    const id = (this as TypeObject).id
+                    return await $.delete(tableName, id)
                 }
             }
         } catch (error) {
@@ -131,11 +139,11 @@ class ORM {
         }
     }
 
-    public async findById<T>(id: number, options?: TypeOptions) {
+    public async _findById<T>(tableName: string, id: number, options?: TypeOptions) {
         try {
             const $ = this;
             const sql = `SELECT *
-                         FROM ${$.tableName}
+                         FROM ${tableName}
                          WHERE id = ?`;
             if (isNaN(Number(id))) {
                 return undefined;
@@ -150,11 +158,11 @@ class ORM {
                 ...data as unknown as T,
                 save: async function () {
                     const json = JSON.parse(JSON.stringify(this))
-                    await $.update.bind($)(json)
+                    return await $.update(tableName, json)
                 },
                 destroy: async function () {
-                    const id = (this as Data).id;
-                    await $.delete.bind($)(id)
+                    const id = (this as TypeObject).id
+                    return await $.delete(tableName, id)
                 }
             }
         } catch (error) {
@@ -163,36 +171,39 @@ class ORM {
         }
     }
 
-    public async findAll(options?: TypeOptionsFindAll) {
+    public async _findAll<T>(tableName: string, options?: TypeOptionsFindAll<T>) {
         try {
             const $ = this;
             if (options) {
-                const where = options['where'] || {};
+                const where = options['where'];
+                const keys = Object.keys(where);
                 const exclude = options['exclude'] || [];
                 const limit = options['limit'] as number || 0;
                 const offset = options['offset'] as number || 0;
-                if (Object.keys(where).length > 0) {
+                if (keys.length > 0) {
                     if (!validateValue(where)) return undefined;
                     const sqlWhere = Object.keys(where).map((key: string) => `${key} = ?`).join(' AND ');
                     const sqlLimit = limit > 0 ? `LIMIT ${limit}` : '';
                     const sqlOffset = offset > 0 ? `OFFSET ${offset}` : '';
                     const sql = `SELECT *
-                                 FROM ${$.tableName}
+                                 FROM ${tableName}
                                  WHERE ${sqlWhere} ${sqlLimit} ${sqlOffset}`;
-                    const values = where.map((key: string) => options['where'][key]);
+
+                    const values: string[] = [];
+
                     const [row,] = await $.pool.query(sql, values);
                     return $.excludeArray($.stringToArray(row), exclude);
                 }
                 const sqlLimit = limit > 0 ? `LIMIT ${limit}` : '';
                 const sqlOffset = offset > 0 ? `OFFSET ${offset}` : '';
                 const sql = `SELECT *
-                             FROM ${$.tableName} ${sqlLimit} ${sqlOffset}`;
+                             FROM ${tableName} ${sqlLimit} ${sqlOffset}`;
                 const [row,] = await $.pool.query(sql);
                 return $.excludeArray($.stringToArray(row), exclude);
 
             }
             const sql = `SELECT *
-                         FROM ${$.tableName} LIMIT 100`;
+                         FROM ${tableName} LIMIT 100`;
             const [row,] = await $.pool.query(sql);
             return $.stringToArray(row)
 
@@ -215,18 +226,18 @@ class ORM {
         return data
     }
 
-    public excludeObject(data: Data, exclude: string[]) {
+    public excludeObject(data: { [key: string]: any }, exclude: string[]) {
         exclude.forEach((value: string) => delete data[value]);
         return data
     }
 
-    public async update(data: Data) {
+    public async update(tableName: string, data: { [key: string]: any }) {
         try {
             const $ = this;
             if (!validateValue(data)) return undefined;
             this.excludeObject(data, ["created_at", "updated_at"])
             const keys = Object.keys(data);
-            const sql = `UPDATE ${$.tableName}
+            const sql = `UPDATE ${tableName}
                          SET ${keys.map((key: string) => `${key} = ?`).join(',')}
                          WHERE id = ?`;
             const values = keys.map(key => data[key]);
@@ -239,11 +250,11 @@ class ORM {
 
     }
 
-    public async delete(id: number) {
+    public async delete(tableName: string, id: number) {
         try {
             const $ = this;
             const sql = `DELETE
-                         FROM ${$.tableName}
+                         FROM ${tableName}
                          WHERE id = ?`;
             await $.pool.query(sql, [id]);
             return true;
@@ -255,8 +266,14 @@ class ORM {
 
     public async query(sql: string, values: string[]) {
         const [row,] = await this.pool.query(sql, values);
+
         return this.stringToArray(row)
     }
+
+    public getValue(obj: { [key: string]: any }, key: string) {
+        return obj[key]
+    }
+
 }
 
 export default ORM;

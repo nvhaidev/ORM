@@ -1,49 +1,67 @@
 import { Config, Data, Row, TypeOptions, TypeOptionsFind, TypeOptionsFindAll } from "./models";
 declare class ORM {
     private pool;
-    private tableName;
     constructor(config: Config);
     crateTable: (tableName: string, columns?: {
         [key: string]: any;
     } | undefined) => Promise<boolean>;
     checkTable: (tableName: string) => Promise<boolean>;
     table<T>(tableName: string): {
-        create: (value: {
-            [key: string]: any;
-        }) => Promise<(T & {
-            save: () => Promise<void>;
-            destroy: () => Promise<void>;
+        create: (value: Data<T>) => Promise<(T & {
+            save: () => Promise<{
+                [key: string]: any;
+            } | undefined>;
+            destroy: () => Promise<boolean>;
         }) | undefined>;
-        findOne: (value: TypeOptionsFind) => Promise<(T & {
-            save: () => Promise<void>;
-            destroy: () => Promise<void>;
+        findOne: (options: TypeOptionsFind<T>) => Promise<(T & {
+            save: () => Promise<{
+                [key: string]: any;
+            } | undefined>;
+            destroy: () => Promise<boolean>;
         }) | undefined>;
-        findById: (id: number, options?: TypeOptions | undefined) => Promise<(T & {
-            save: () => Promise<void>;
-            destroy: () => Promise<void>;
+        findById: (id: number) => Promise<(T & {
+            save: () => Promise<{
+                [key: string]: any;
+            } | undefined>;
+            destroy: () => Promise<boolean>;
         }) | undefined>;
-        findAll: (options?: TypeOptionsFindAll | undefined) => Promise<any[] | undefined>;
+        findAll: (options?: TypeOptionsFindAll<T>) => Promise<any[] | undefined>;
     };
-    create<T>(value: {
-        [key: string]: any;
-    }): Promise<(T & {
-        save: () => Promise<void>;
-        destroy: () => Promise<void>;
+    _create<T>(tableName: string, value: Data<T>): Promise<(T & {
+        save: () => Promise<{
+            [key: string]: any;
+        } | undefined>;
+        destroy: () => Promise<boolean>;
     }) | undefined>;
-    findOne<T>(value: TypeOptionsFind): Promise<(T & {
-        save: () => Promise<void>;
-        destroy: () => Promise<void>;
+    _findOne<T>(tableName: string, value: TypeOptionsFind<T>): Promise<(T & {
+        save: () => Promise<{
+            [key: string]: any;
+        } | undefined>;
+        destroy: () => Promise<boolean>;
     }) | undefined>;
-    findById<T>(id: number, options?: TypeOptions): Promise<(T & {
-        save: () => Promise<void>;
-        destroy: () => Promise<void>;
+    _findById<T>(tableName: string, id: number, options?: TypeOptions): Promise<(T & {
+        save: () => Promise<{
+            [key: string]: any;
+        } | undefined>;
+        destroy: () => Promise<boolean>;
     }) | undefined>;
-    findAll(options?: TypeOptionsFindAll): Promise<any[] | undefined>;
+    _findAll<T>(tableName: string, options?: TypeOptionsFindAll<T>): Promise<any[] | undefined>;
     stringToArray(row: Row): any[];
     excludeArray(data: any[], exclude: string[]): any[];
-    excludeObject(data: Data, exclude: string[]): Data;
-    update(data: Data): Promise<Data | undefined>;
-    delete(id: number): Promise<boolean>;
+    excludeObject(data: {
+        [key: string]: any;
+    }, exclude: string[]): {
+        [key: string]: any;
+    };
+    update(tableName: string, data: {
+        [key: string]: any;
+    }): Promise<{
+        [key: string]: any;
+    } | undefined>;
+    delete(tableName: string, id: number): Promise<boolean>;
     query(sql: string, values: string[]): Promise<any[]>;
+    getValue(obj: {
+        [key: string]: any;
+    }, key: string): any;
 }
 export default ORM;
