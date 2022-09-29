@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import {Config, Data, Row, TypeObject, TypeOptions, TypeOptionsFind, TypeOptionsFindAll} from "./models";
 import {validateValue} from "./validate";
+import json from "@ptndev/json"
 
 class ORM {
     private pool: mysql.Pool;
@@ -63,8 +64,8 @@ class ORM {
             findOne: async function (options: TypeOptionsFind<T>) {
                 return await $._findOne<T>(tableName, options)
             },
-            findById: async function (id: number) {
-                return await $._findById<T>(tableName, id)
+            findById: async function (id: number,options?:TypeOptions) {
+                return await $._findById<T>(tableName, id,options)
             },
             findAll: async function (options?: TypeOptionsFindAll<T>) {
                 return await $._findAll<T>(tableName, options)
@@ -82,12 +83,13 @@ class ORM {
             const values = keys.map(key => $.getValue(value, key));
             const [row,] = await $.pool.query(sql, values);
             const id = (row as mysql.ResultSetHeader).insertId;
-            const data = await $._findById(tableName, id) as unknown as T;
+            const data = await $._findById<T>(tableName, id);
+
             return {
                 ...data as unknown as T,
                 save: async function () {
-                    const json = JSON.parse(JSON.stringify(this))
-                    return await $.update(tableName, json)
+                    const jsonData = json.parse(json.stringify(this))
+                    return await $.update(tableName, jsonData)
                 },
                 destroy: async function () {
                     const id = (this as TypeObject).id
@@ -125,8 +127,8 @@ class ORM {
             return {
                 ...data as unknown as T,
                 save: async function () {
-                    const json = JSON.parse(JSON.stringify(this))
-                    return await $.update(tableName, json)
+                    const jsonData = json.parse(json.stringify(this))
+                    return await $.update(tableName, jsonData)
                 },
                 destroy: async function () {
                     const id = (this as TypeObject).id
@@ -157,8 +159,8 @@ class ORM {
             return {
                 ...data as unknown as T,
                 save: async function () {
-                    const json = JSON.parse(JSON.stringify(this))
-                    return await $.update(tableName, json)
+                    const jsonData = json.parse(json.stringify(this))
+                    return await $.update(tableName, jsonData)
                 },
                 destroy: async function () {
                     const id = (this as TypeObject).id
@@ -189,8 +191,7 @@ class ORM {
                                  FROM ${tableName}
                                  WHERE ${sqlWhere} ${sqlLimit} ${sqlOffset}`;
 
-                    const values: string[] = [];
-
+                    const values = keys.map(key => $.getValue(where, key));
                     const [row,] = await $.pool.query(sql, values);
                     return $.excludeArray($.stringToArray(row), exclude);
                 }
@@ -271,8 +272,9 @@ class ORM {
     }
 
     public getValue(obj: { [key: string]: any }, key: string) {
-        return obj[key]
+        return json.stringify(obj[key])
     }
+
 
 }
 

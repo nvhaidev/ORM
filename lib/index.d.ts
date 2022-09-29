@@ -19,7 +19,7 @@ declare class ORM {
             } | undefined>;
             destroy: () => Promise<boolean>;
         }) | undefined>;
-        findById: (id: number) => Promise<(T & {
+        findById: (id: number, options?: TypeOptions) => Promise<(T & {
             save: () => Promise<{
                 [key: string]: any;
             } | undefined>;
